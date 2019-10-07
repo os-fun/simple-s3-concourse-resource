@@ -1,31 +1,18 @@
 #!/bin/bash
 set -xe
-mkdir -p tmp
-sh assets/in tmp <<EOF
+
+docker run --rm -v $PWD:/output $IMAGE_NAME sh /opt/resource/in /output <<EOF
 {
   "source": {
-    "url": "http://download.opensuse.org/tumbleweed/repo/oss/suse/x86_64/",
-    "regexp": "kernel-default-(.*).x86_64.rpm"
+    "url": "https://kubernetes-charts.suse.com/",
+    "relase_name": "cf"
   },
-  "version": { "ref": "4.9.9-1.2" }
 }
 EOF
 
-sh assets/in tmp <<EOF
-{
-  "source": {
-    "url": "http://download.opensuse.org/tumbleweed/repo/oss/suse/x86_64/",
-    "regexp": "kernel-default-(.*).x86_64.rpm"
-  },
-  "version": { "ref": "4.9.10-1.1" }
-}
-EOF
+CHART=$(ls *.zip)
 
-sh assets/in tmp <<EOF
-{
-  "source": {
-    "url": "http://download.opensuse.org/tumbleweed/repo/oss/suse/x86_64/",
-    "regexp": "kernel-default-(.*).x86_64.rpm"
-  }
-}
-EOF
+if [ -z "$CHART" ]; then
+  echo "no chart could be fetched"
+  exit 1
+fi

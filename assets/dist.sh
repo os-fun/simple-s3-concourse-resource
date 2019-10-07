@@ -4,24 +4,25 @@ set -e
 
 HELM_VERSION="$1"
 HELM_REPO="${HELM_REPO:-https://kubernetes-charts.suse.com/}"
+HELM_REPO_NAME="${HELM_REPO_NAME:-suse}"
 rm -rf tmp || true
 
 mkdir tmp
 pushd tmp
   export HELM_HOME="$(pwd)"/.helm
   helm init --client-only
-  helm repo add suse $HELM_REPO
+  helm repo add "$HELM_REPO_NAME" $HELM_REPO
   helm repo update
 
   if [ -n "$HELM_VERSION" ]; then
 
-    helm fetch suse/cf --version $HELM_VERSION
-    helm fetch suse/uaa --version $HELM_VERSION
+    helm fetch "$HELM_REPO_NAME"/cf --version $HELM_VERSION
+    helm fetch "$HELM_REPO_NAME"/uaa --version $HELM_VERSION
 
   else
 
-    helm fetch suse/cf
-    helm fetch suse/uaa
+    helm fetch "$HELM_REPO_NAME"/cf
+    helm fetch "$HELM_REPO_NAME"/uaa
 
   fi
 

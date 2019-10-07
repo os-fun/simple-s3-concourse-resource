@@ -17,9 +17,6 @@ exec 1>&2 # redirect all output to stderr for logging
 
 source $(dirname $0)/common.sh
 
-payload=$(mktemp /tmp/resource-in.XXXXXX)
-cat > $payload <&0
-
 parse_source_config
 
 output_single_version() {
@@ -36,14 +33,14 @@ output_empty_list() {
 EOF
 }
 
-helm init --client-only
-helm repo add concourse_chart $URL
-helm repo update
+helm init --client-only >/dev/null 2>&1
+helm repo add $REPO_NAME $URL >/dev/null 2>&1
+helm repo update >/dev/null 2>&1
 
-CHART_VERSIONS=($(helm search $RELEASE_NAME -l | tail -n +2 | awk '{ print $2 }' | xargs echo))
-LATEST_CHART_VERSION="${CHART_VERSIONS[1]}"
+CHART_VERSIONS=($(helm search $REPO_NAME/$RELEASE_NAME -l | tail -n +2 | awk '{ print $2 }' | xargs echo))
+LATEST_CHART_VERSION="${CHART_VERSIONS[0]}"
 
-if [ -z "$LATEST_CHART_VERSION"]; then
+if [ -z "$LATEST_CHART_VERSION" ]; then
 
   output_empty_list
 
