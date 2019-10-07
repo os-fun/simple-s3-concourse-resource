@@ -3,8 +3,8 @@
 # Input JSON from STDIN
 # {
 #   "source": {
-#     "url": "https://download.opensuse.org",
-#     "regexp": "file-(.*).ext"
+#     "url": "https://kubernetes-charts.suse.com/",
+#     "release_name": "suse/cf"
 #   },
 #   "version": { "ref": "61cebf" }
 # }
@@ -26,21 +26,20 @@ DESTINATION_DIR=$1
 
 cd $DESTINATION_DIR
 
+export HELM_REPO="$URL"
 if [ -z "$VERSION" ] || [ "$VERSION" == "latest" ]; then
-  get_listing
-  parse_versions
-  VERSION=$(echo $FOUND_VERSIONS | sort -rh | head -1)
+  $(dirname $0)/dist.sh
+  else
+  $(dirname $0)/dist.sh "$VERSION"
 fi
 
-FILE=$(echo "$REGEXP" | sed -e "s/(.*)/$VERSION/")
-lftp -c "open $URL; get $FILE"
-
-# The script must emit the fetched version, and may emit metadata as a list of key-value pairs. This data is intended for public consumption and will make it upstream, intended to be shown on the build's page.
+VERSION=$(cat dist_version)
+CHART_FILE=$(ls *.zip)
 cat >&3 <<EOF
 {
   "version": { "ref": "$VERSION" },
   "metadata": [
-    { "name": "comment", "value": "$FILE" }
+    { "name": "comment", "value": "$CHART_FILE" }
   ]
 }
 EOF

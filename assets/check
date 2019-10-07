@@ -3,8 +3,8 @@
 # Input JSON from STDIN
 # {
 #   "source": {
-#     "url": "https://download.opensuse.org",
-#     "regexp": "file-(.*).ext"
+#     "url": "https://kubernetes-charts.suse.com/",
+#     "release_name": "suse/cf"
 #   },
 #   "version": { "ref": "61cebf" }
 # }
@@ -36,60 +36,19 @@ output_empty_list() {
 EOF
 }
 
-output_current() {
-  CUR=$(echo $FOUND_VERSIONS | sort -rh | head -1)
-  if [ -z "$CUR" ]; then
-    output_empty_list
+helm init --client-only
+helm repo add concourse_chart $URL
+helm repo update
 
-  else
-    output_single_version $CUR
-  fi
-}
+CHART_VERSIONS=($(helm search $RELEASE_NAME -l | tail -n +2 | awk '{ print $2 }' | xargs echo))
+LATEST_CHART_VERSION="${CHART_VERSIONS[1]}"
 
-output_newer_versions() {
-  VERSION="$1"
-  REFS=""
-  REVERSE_VERSIONS=$(echo $FOUND_VERSIONS | sort -rh)
-  local IFS=$'\n'
-  for version in $REVERSE_VERSIONS; do
-    NEW_REF="{ \"ref\": \"$version\" }"
-    if [ "${#REFS}" != "0" ]; then
-      NEW_REF="{ \"ref\": \"$version\" },"
-    fi
+if [ -z "$LATEST_CHART_VERSION"]; then
 
-    REFS="$NEW_REF$REFS" # prepend because of ,
+  output_empty_list
 
-    if [ "$version" = "$VERSION" ]; then
-      break
-    fi
-  done
+else 
 
-  # The list may be empty, if there are no versions available at the source.
-  OUTPUT_STRING="[ $REFS ]"
-  echo $OUTPUT_STRING >&3
-}
+  output_single_version $LATEST_CHART_VERSION
 
-get_listing
-parse_versions
-
-# version will be omitted from the first request, in which case the resource should return the current version (not every version since the resource's inception).
-if [ -z "$VERSION" ]; then
-  output_current
-
-else
-
-  POS=$(echo $FOUND_VERSIONS | sort -rh | nl | grep $VERSION | awk '{print $1}')
-  if [ -z "$POS" ]; then
-    # If your resource is unable to determine which versions are newer then the given version, then the current version of your resource should be returned.
-    output_current
-
-  elif [ "$POS" = "1" ]; then
-    # If the given version is already the latest, an array with that version as the sole entry should be listed.
-    output_single_version "$VERSION"
-
-  else
-    # print the array of new versions, in chronological order, to stdout, including the requested version if it's still valid.
-    output_newer_versions "$VERSION"
-
-  fi
 fi
