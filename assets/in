@@ -6,7 +6,7 @@
 #     "url": "https://kubernetes-charts.suse.com/",
 #     "release_name": "cf"
 #   },
-#   "version": { "ref": "61cebf" }
+#   "version": { "ref": "2.17.1" }
 # }
 
 set -e

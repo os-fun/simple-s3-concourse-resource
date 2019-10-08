@@ -20,6 +20,8 @@ resource_types:
 resources:
 - name: latest-helm-scf
   type: helm-resource
+  source:
+    release_name: cf
 
 jobs:
 - name: deploy-scf
