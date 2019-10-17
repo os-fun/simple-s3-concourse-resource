@@ -1,4 +1,4 @@
-IMAGE_NAME ?= splatform/concourse-helm-resource
+IMAGE_NAME ?= splatform/concourse-simple-s3-resource
 
 .PHONY: test
 test: image

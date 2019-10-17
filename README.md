@@ -1,32 +1,35 @@
-# Helm Concourse Resource
+# Simple s3 Concourse Resource
 
-A Concourse CI resource to interface with helm.
-It can check any SCF helm repo for latest releases in a chart repository.
+A Concourse CI resource to get latest files in a s3 bucket.
 
 ## Source Configuration
-
-* `url`: URL of the SCF helm repository (optional).
+* `bucket`: s3 bucket name
+* `bucket_subfolder:`: If files are in a subfolder, specify it here (`files/`)
+* `filter`: grep format to filter out files
+* `aws_access_key_id`: AWS access Key ID
+* `aws_secret_access_key`: Aws secret access key
+* `aws_default_region`: aws region
 
 ## Example
 
 ```
 resource_types:
-- name: helm-resource
+- name: simple-s3
   type: docker-image
   source:
-      repository: splatform/concourse-helm-resource
+      repository: splatform/concourse-simple-s3-resource
       tag: latest
 
 resources:
-- name: latest-helm-scf
-  type: helm-resource
+- name: latest
+  type: simple-s3
   source:
-    release_name: cf
+    bucket: "test"
 
 jobs:
-- name: deploy-scf
+- name: get-it
   plan:
-  - get: latest-helm-scf
+  - get: latest
     trigger: true
   - task: work
     config:
@@ -38,10 +41,10 @@ jobs:
 
 ### `check`: Check for new revisions
 
-Checks the remote server for versions.
+Checks the remote server for new versions.
 
 ### `in`: Fetch from build service
 
-Downloads and reassembles chart from remote server.
+Downloads the latest uploaded file from the bucket.
 
 ### `out`: Not implemented

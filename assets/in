@@ -3,10 +3,14 @@
 # Input JSON from STDIN
 # {
 #   "source": {
-#     "url": "https://kubernetes-charts.suse.com/",
-#     "release_name": "cf"
+#     "bucket": "test",
+#     "bucket_subfolder": "subfoo/",
+#     "filter": "zip",
+#     "aws_access_key_id": "xxxx",
+#     "aws_secret_access_key": "yyy",
+#     "aws_default_region": "us-east-1",
 #   },
-#   "version": { "ref": "2.17.1" }
+#   "version": { "ref": "file.zip" }
 # }
 
 set -e
@@ -23,20 +27,22 @@ DESTINATION_DIR=$1
 
 cd $DESTINATION_DIR
 
-export HELM_REPO="$URL"
-if [ -z "$VERSION" ] || [ "$VERSION" == "latest" ]; then
-  $(dirname $0)/dist.sh >/dev/null 2>&1
-  else
-  $(dirname $0)/dist.sh "$VERSION" >/dev/null 2>&1
+if [ -n "$FILTER" ]; then
+  KEY=$(aws s3 ls s3://$BUCKET/$BUCKET_DIR --recursive | grep "${FILTER}" | grep "${VERSION}" | sort | tail -n 1 | awk '{print $4}')
+else
+  KEY=$(aws s3 ls s3://$BUCKET/$BUCKET_DIR --recursive | grep "${VERSION}" | sort | tail -n 1 | awk '{print $4}')
 fi
 
-VERSION=$(cat dist_version)
-CHART_FILE=$(ls *.zip)
+aws s3 cp s3://$BUCKET/$KEY ./
+               
+FILE=$(ls)
+VERSION="$(date -r "$FILE" "+%Y-%m-%d %H:%M:%S")"
+
 cat >&3 <<EOF
 {
   "version": { "ref": "$VERSION" },
   "metadata": [
-    { "name": "comment", "value": "$CHART_FILE" }
+    { "name": "file", "value": "$FILE" }
   ]
 }
 EOF

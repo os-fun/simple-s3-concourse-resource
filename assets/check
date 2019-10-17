@@ -3,10 +3,14 @@
 # Input JSON from STDIN
 # {
 #   "source": {
-#     "url": "https://kubernetes-charts.suse.com/",
-#     "release_name": "suse/cf"
+#     "bucket": "test",
+#     "bucket_subfolder": "subfoo/",
+#     "filter": "zip",
+#     "aws_access_key_id": "xxxx",
+#     "aws_secret_access_key": "yyy",
+#     "aws_default_region": "us-east-1",
 #   },
-#   "version": { "ref": "61cebf" }
+#   "version": { "ref": "file.zip" }
 # }
 
 set -e
@@ -33,19 +37,25 @@ output_empty_list() {
 EOF
 }
 
-helm init --client-only >/dev/null 2>&1
-helm repo add $REPO_NAME $URL >/dev/null 2>&1
-helm repo update >/dev/null 2>&1
+if [ -n "$FILTER" ]; then
+  KEY=$(aws s3 ls s3://$BUCKET/$BUCKET_DIR --recursive | grep "${FILTER}" | sort | tail -n 1 | awk '{print $4}')
+else
+  KEY=$(aws s3 ls s3://$BUCKET/$BUCKET_DIR --recursive | sort | tail -n 1 | awk '{print $4}')
+fi
 
-CHART_VERSIONS=($(helm search $REPO_NAME/$RELEASE_NAME -l | tail -n +2 | awk '{ print $2 }' | xargs echo))
-LATEST_CHART_VERSION="${CHART_VERSIONS[0]}"
+pushd $(mktemp -d /tmp/resource-check.XXXXXX)
+aws s3 cp s3://$BUCKET/$KEY ./
+               
+FILE=$(ls)
+echo $FILE
+VERSION="$(date -r "$FILE" "+%Y-%m-%d %H:%M:%S")"
 
-if [ -z "$LATEST_CHART_VERSION" ]; then
+if [ -z "$VERSION" ]; then
 
   output_empty_list
 
 else 
 
-  output_single_version $LATEST_CHART_VERSION
+  output_single_version "$VERSION"
 
 fi

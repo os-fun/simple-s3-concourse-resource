@@ -1,6 +1,5 @@
 #!/bin/bash
 
-# For helm repository push, use this one: https://github.com/linkyard/concourse-helm-resource
-echo "This resource doesn't push to helm repositories"
+echo "This resource doesn't push to s3 buckets"
 
 exit 1
