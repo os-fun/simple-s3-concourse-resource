@@ -1,4 +1,4 @@
-FROM opensuse/leap
+FROM registry.opensuse.org/opensuse/leap
 
 RUN zypper -n in jq wget curl tar gzip which zip aws-cli
 RUN curl -L https://git.io/get_helm.sh | bash
